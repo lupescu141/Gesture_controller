@@ -27,6 +27,16 @@ module.exports = [
     },
     node: { __dirname: false, __filename: false },
   },
+  {
+    target: "electron-renderer",
+    mode: "production",
+    entry: path.resolve(__dirname, "./src/electron/toolbar.js"),
+    output: {
+      path: path.resolve(__dirname, "./dist"),
+      filename: "toolbar.js",
+    },
+    node: { __dirname: false, __filename: false },
+  },
 
   {
     target: "electron-renderer",
@@ -59,6 +69,7 @@ module.exports = [
           // copy renderer html and models
           { from: "src/pages/overlay.html", to: "overlay.html" },
           { from: "src/pages/documentation.html", to: "documentation.html" },
+          { from: "src/pages/toolbar.html", to: "toolbar.html" },
 
           {
             from: "models/gesture_recognizer.task",
@@ -81,6 +92,7 @@ module.exports = [
       }),
       new MiniCssExtractPlugin({ filename: "overlay.css" }),
       new MiniCssExtractPlugin({ filename: "settings.css" }),
+      new MiniCssExtractPlugin({ filename: "toolbar.css" }),
     ],
     resolve: {
       extensions: [".js"],

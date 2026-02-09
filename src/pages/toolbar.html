@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <meta
+      http-equiv="X-Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <title>Toolbar</title>
+    <link href="./toolbar.css" rel="stylesheet" />
+    <script src="./toolbar.js" defer></script>
+  </head>
+  <body class="shadow">
+    <div class="toolbar">
+      <h1>KAMEKO</h1>
+      <button id="camera_button">
+        <img src="./images/webcam3.png" alt="" />
+        <div class="tooltip">
+          <span class="tooltiptext tooltip-bottom">Activate camera mode</span>
+        </div>
+      </button>
+      <button id="kinect_button">
+        <img src="./images/kinect.png" alt="" />
+        <div class="tooltip">
+          <span class="tooltiptext tooltip-bottom">Activate kinect mode</span>
+        </div>
+      </button>
+      <button id="help_button">
+        <img src="./images/help.png" alt="" />
+        <div class="tooltip">
+          <span class="tooltiptext tooltip-bottom">Opens documentation</span>
+        </div>
+      </button>
+      <button id="settings_button">
+        <img src="./images/settings.png" alt="" />
+        <div class="tooltip">
+          <span class="tooltiptext tooltip-bottom">Settings</span>
+        </div>
+      </button>
+    </div>
+
+    <div id="settings">
+      <div id="settingsheader">
+        <p>Settings</p>
+        <span id="close_settings">×</span>
+      </div>
+      <div class="switch_row">
+        <p>Activate left hand mode</p>
+        <label class="switch">
+          <input type="checkbox" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+  </body>
+</html>

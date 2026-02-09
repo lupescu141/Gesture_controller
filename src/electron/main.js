@@ -7,17 +7,24 @@ const {
   dialog,
   session,
   ipcMain,
+  globalShortcut,
 } = require("electron");
 import { mouse, Point, keyboard, Key, Button } from "@nut-tree-fork/nut-js";
+import { window_show } from "./functions";
 
 if (require("electron-squirrel-startup")) {
   app.quit();
 }
 const path = require("path");
 
+// Enable usage of Portal's globalShortcuts. This is essential for cases when
+// the app runs in a Wayland session.
+app.commandLine.appendSwitch("enable-features", "GlobalShortcutsPortal");
+
 // save a reference to the Tray object globally to avoid garbage collection
 let tray = null;
 let documentWindow = null;
+let toolbar = null;
 let isQuitting = false;
 
 const dir = __dirname;
@@ -32,7 +39,7 @@ const createTray = () => {
       "app.asar",
       "dist",
       "images",
-      "webcam.png"
+      "webcam.png",
     );
   } else {
     // development path to icon
@@ -109,6 +116,7 @@ const createWindow = () => {
     frame: true,
     title: "Documentation",
     icon: "./images/webcam_large2.png",
+    show: false,
   });
 
   documentWindow.loadFile(path.join(dir, "documentation.html"));
@@ -116,6 +124,25 @@ const createWindow = () => {
     if (!isQuitting) {
       e.preventDefault();
       documentWindow.hide();
+    }
+  });
+
+  toolbar = new BrowserWindow({
+    width,
+    height,
+    resizable: false,
+    transparent: true,
+    frame: false,
+    title: "Toolbar",
+    skipTaskbar: true,
+    show: false,
+  });
+
+  toolbar.loadFile(path.join(dir, "toolbar.html"));
+  toolbar.on("close", (e) => {
+    if (!isQuitting) {
+      e.preventDefault();
+      toolbar.hide();
     }
   });
 
@@ -137,7 +164,7 @@ const createWindow = () => {
       } else {
         callback(false);
       }
-    }
+    },
   );
 };
 
@@ -319,19 +346,43 @@ app.whenReady().then(() => {
     lastLeftGesture = leftGesture;
   });
 
-  // ELECTRON APP EVENTS
+  //Global shortcuts:
+  app.whenReady().then(() => {
+    // Register a 'Control+o' shortcut listener.
+    const ret = globalShortcut.register("Control+O", () => {
+      console.log("Control+O is pressed");
 
+      if (!toolbar.isVisible()) {
+        toolbar.show();
+        toolbar.focus();
+        return;
+      }
+      if (!toolbar.isMinimized()) {
+        toolbar.hide();
+        return;
+      }
+    });
+
+    if (!ret) {
+      console.log("registration failed");
+    }
+
+    // Check whether a shortcut is registered.
+    console.log(globalShortcut.isRegistered("Control+O"));
+  });
+
+  // ELECTRON APP EVENTS
   app.on("ready", createWindow);
 
-  app.on("activate", () => {
-    if (documentWindow && documentWindow.isMinimized()) {
-      documentWindow.show();
-    }
-    //overlay.show();
-  });
+  // Check whether a shortcut is registered.
+  console.log(globalShortcut.isRegistered("CommandOrControl+O"));
+});
 
-  app.on("before-quit", function () {
-    isQuitting = true;
-    tray.destroy();
-  });
+app.on("activate", () => {});
+
+app.on("before-quit", function () {
+  isQuitting = true;
+  // Unregister all shortcuts.
+  globalShortcut.unregisterAll();
+  tray.destroy();
 });

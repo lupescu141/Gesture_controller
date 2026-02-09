@@ -1,4 +1,6 @@
 import "../overlay.css";
+import "../settings.css";
+import "../toolbar.css";
 import { draw } from "./canvas/canvas2D";
 import { DrawingUtils } from "@mediapipe/tasks-vision";
 import { requestStream, enumerateVideoInputs } from "./media/camera";
@@ -71,7 +73,7 @@ async function main() {
         console.log(
           `Switching to: ${
             deviceSelect.options[deviceSelect.selectedIndex].text
-          }`
+          }`,
         );
         await requestStream(video, deviceSelect.value, detect);
       } catch (e) {
