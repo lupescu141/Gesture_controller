@@ -88,6 +88,11 @@ module.exports = [
             to: "images/icons",
             noErrorOnMissing: true,
           },
+          {
+            from: "src/pages/fonts/matrix.ttf",
+            to: "fonts/matrix.ttf",
+            noErrorOnMissing: true,
+          },
         ],
       }),
       new MiniCssExtractPlugin({ filename: "overlay.css" }),
