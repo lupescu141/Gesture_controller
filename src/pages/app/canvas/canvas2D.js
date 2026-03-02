@@ -8,7 +8,8 @@ async function draw(results, canvas, canvasCtx, drawingUtils) {
   canvas.width = window.screen.width;
   canvas.height = window.screen.height;
 
-  if (results.landmarks) {
+  console.log(results.landmarks.length, results.landmarks);
+  if (results.landmarks && results.landmarks.length > 0) {
     for (const landmarks of results.landmarks) {
       drawingUtils.drawConnectors(
         landmarks,
@@ -16,7 +17,7 @@ async function draw(results, canvas, canvasCtx, drawingUtils) {
         {
           color: "#5555FF",
           lineWidth: 1,
-        }
+        },
       );
       drawingUtils.drawLandmarks(landmarks, {
         color: "#5555FF",

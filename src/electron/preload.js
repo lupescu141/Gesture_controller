@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld("appBridge", {
   // SENFING GESTURES TO MAIN.JS
   //  gesturet
   sendGesture: (gesture) => {
-    console.log("sendGesture called with gesture:", gesture);
+    //console.log("sendGesture called with gesture:", gesture);
     ipcRenderer.send("gestures-channel", gesture);
   },
   // Return the runtime resources path (useful in packaged apps)

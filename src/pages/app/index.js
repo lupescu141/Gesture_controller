@@ -4,10 +4,12 @@ import { DrawingUtils } from "@mediapipe/tasks-vision";
 import { requestStream, enumerateVideoInputs } from "./media/camera";
 import { initGestureRecognizer } from "./media/mediapipe";
 import { animationManager } from "./media/animationManager";
+/* import { OneEuroFilter } from "./clasess/JitterFilter"; */
 
 // Entry bootstrapping of the renderer app.
 async function main() {
-  // DOM elements
+  //________________________________________________________________
+  /* -- DOM ELEMENTS -- */
   const status = document.getElementById("status");
   const canvas = document.getElementById("canvas");
   const video = document.getElementById("video");
@@ -21,12 +23,15 @@ async function main() {
     if (status) status.textContent = "Error: canvas/video element not found.";
     return;
   }
+  //________________________________________________________________
+  /* GET MONITOR SIZE */
   const monitor = {
     width: window.screen.width,
     height: window.screen.height,
   };
 
-  // FOR GESTURE CONTROL INFO BOX
+  //________________________________________________________________
+  /* -- FOR GESTURE CONTROL INFO BOX -- */
   const infoBox = document.getElementById("mark");
   const rect = infoBox.getBoundingClientRect();
   const rectX = rect.x;
@@ -34,17 +39,18 @@ async function main() {
   const rectBottom = rect.bottom;
   const rectRight = rect.right;
 
-  // for 2D canvas
+  //________________________________________________________________
+  /* -- 2D CANVAS -- */
   const canvasCtx = canvas.getContext("2d");
   const drawingUtils = new DrawingUtils(canvasCtx);
   canvas.style.transform = "rotateY(180deg)"; // mirror 2D canvas
-  ////////////////////
 
-  // Enumerate Video inpput devices then executes a prompt for video detection --> requestStream
+  //________________________________________________________________
+  /* -- ENUMERATE VIDEO INPUT DEVICES -- */
+  //    Then executes a prompt for video detection --> requestStream
   const inputs = await enumerateVideoInputs().then(async (_inputs) => {
     if (_inputs.length === 0) {
       // if no devices found Will return empty array withot executing
-      console.log("No Video inpput device found...");
       return [];
     }
     try {
@@ -55,8 +61,9 @@ async function main() {
     return _inputs; // returns _inputs for const inputs
   });
 
-  // if camera devices have been found camera selection dropdown menu will be enamble
-  // TODO move to setting menu
+  //________________________________________________________________
+  /* -- CAMERA DROPDOWN -- */
+  //    if camera devices have been found camera selection dropdown menu will be enamble
   if (inputs.length > 1) {
     deviceContainer.style.display = "block";
     deviceSelect.innerHTML = "";
@@ -71,7 +78,7 @@ async function main() {
         console.log(
           `Switching to: ${
             deviceSelect.options[deviceSelect.selectedIndex].text
-          }`
+          }`,
         );
         await requestStream(video, deviceSelect.value, detect);
       } catch (e) {
@@ -80,51 +87,87 @@ async function main() {
     });
   }
 
+  //________________________________________________________________
+  /* -- JITTER FILTER -- */
+
+  /* WORK IN PROGRESS */
+  /*   let frequency = 60; // Hz
+  let mincutoff = 0.2; // Hz
+  let beta = 0.007;
+  let dcutoff = 1.0;
+
+  function FilterLM(filtered, landmark, ts) {
+    for (const i in results.landmarks[0]) {
+      const filter_x = new OneEuroFilter(frequency, mincutoff, beta, dcutoff);
+      const filter_y = new OneEuroFilter(frequency, mincutoff, beta, dcutoff);
+      const x = filter_x.filter(landmark.x, ts);
+      const y = filter_y.filter(landmark.y, ts);
+      const filteredResult = { x, y };
+      filtered.landmarks[0].push(filteredResult);
+    }
+  } */
+
+  //________________________________________________________________
+  /* -- DETECT FROM VIDEO -- */
+  let lastVideoTime = -1;
   function detect() {
-    /*     if (!gestureRecognizer) {
-      console.log("Loading hand model...");
-      gestureRecognizer = (await initGestureRecognizer()).gestureRecognizer;
-    } */
     try {
-      const ts = performance.now(); // added a 50 millisecond delay to prevent Failuer to reserve output capture buffer
-      const results = gestureRecognizer.recognizeForVideo(video, ts);
-      if (results.gestures && results.gestures.length > 0) {
-        // send gestures to main process via IPC
-        console.log(results.gestures.map((g) => g.categoryName));
-        window.appBridge.sendGesture(results);
-      }
+      if (video.currentTime !== lastVideoTime) {
+        const ts = performance.now();
+        const results = gestureRecognizer.recognizeForVideo(video, ts);
 
-      // -------- FOR SHOWING THE GESTURE CONTROLS INFO BOX ------------
+        //________________________________________________________________
+        // -- FILTER NOISE --
+        /*     const landmark = [];
+        const filtered = { landmarks: [landmark] };
+        if (results.landmarks && results.landmarks.length > 0) {
+          FilterLM(filtered, landmark, ts);
+        } */
 
-      if (results.landmarks && results.landmarks.length > 0) {
-        // indexfingingertip coords
-        const indexFingerTip = results.landmarks[0][8];
-        const indexX = monitor.width - indexFingerTip.x * monitor.width;
-        const indexY = indexFingerTip.y * monitor.height;
-
-        // infobox doms
-        const controlInstructions = document.getElementById("ohjeet");
-
-        // function to check if indexfinger is inside the box
-        if (
-          indexX >= rectX &&
-          indexX <= rectRight &&
-          indexY >= rectY &&
-          indexY <= rectBottom
-        ) {
-          controlInstructions.style.display = "block";
-        } else {
-          controlInstructions.style.display = "none";
+        //________________________________________________________________
+        /* -- IPC CONNECTION -- */
+        if (results.gestures && results.gestures.length > 0) {
+          // send gestures to main process via IPC
+          window.appBridge.sendGesture(results);
         }
-      }
 
-      // draw results
-      draw(results, canvas, canvasCtx, drawingUtils);
+        //________________________________________________________________
+        // -- FOR SHOWING THE GESTURE CONTROLS INFO BOX --
+        if (results.landmarks && results.landmarks.length > 0) {
+          // indexfingingertip coords
+          const indexFingerTip = results.landmarks[0][8];
+          const indexX = monitor.width - indexFingerTip.x * monitor.width;
+          const indexY = indexFingerTip.y * monitor.height;
+
+          // infobox doms
+          const controlInstructions = document.getElementById("ohjeet");
+
+          // function to check if indexfinger is inside the box
+          if (
+            indexX >= rectX &&
+            indexX <= rectRight &&
+            indexY >= rectY &&
+            indexY <= rectBottom
+          ) {
+            controlInstructions.style.display = "block";
+          } else {
+            controlInstructions.style.display = "none";
+          }
+        }
+
+        //________________________________________________________________
+        // -- DRAW RESULT ON CANVAS --
+        draw(results, canvas, canvasCtx, drawingUtils);
+        //________________________________________________________________
+        // -- lastVideoTime NEW VALUE --
+        lastVideoTime = video.currentTime;
+      }
     } catch (e) {
       console.error(e.message + "Detection error");
+    } finally {
+      // requestAnimationFrame(detect);
+      animationManager.registerTask(detect);
     }
-    // requestAnimationFrame(detect);
-    animationManager.registerTask(detect);
   }
 }
 

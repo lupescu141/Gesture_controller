@@ -8,13 +8,17 @@ const {
   session,
   ipcMain,
 } = require("electron");
+const path = require("path");
 import { mouse, Point, keyboard, Key, Button } from "@nut-tree-fork/nut-js";
 
+//____________________________________
+// INSPECTION REQUIRED THIS MIGHT BE UNUSED
 if (require("electron-squirrel-startup")) {
   app.quit();
 }
-const path = require("path");
 
+//____________________________________
+// TRAY STATE
 // save a reference to the Tray object globally to avoid garbage collection
 let tray = null;
 let documentWindow = null;
@@ -22,6 +26,8 @@ let isQuitting = false;
 
 const dir = __dirname;
 
+//________________________________________________________________
+/* -- CREATE TRAY -- */
 // Creates tray on windows desktop corner
 const createTray = () => {
   let trayIcon;
@@ -32,15 +38,16 @@ const createTray = () => {
       "app.asar",
       "dist",
       "images",
-      "webcam.png"
+      "webcam.png",
     );
   } else {
     // development path to icon
     trayIcon = path.join(__dirname, "images", "webcam.png");
   }
-
+  //____________________________________
   //Creates the tray
   tray = new Tray(trayIcon);
+  //____________________________________
   // Hover text
   tray.setToolTip("Camera Controller");
 
@@ -65,18 +72,21 @@ const createTray = () => {
   ]);
 
   tray.setContextMenu(contextMenu);
-};
+}; // <-- CREATE TRAY END <--
 
-// Creates all windows
+//________________________________________________________________
+/* -- CREATE ALL WINDWOS -- */
 const createWindow = () => {
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.size;
 
+  //____________________________________
+  /* -- MAIN OVERLAY -- */
   const overlay = new BrowserWindow({
     width,
     height,
     frame: false,
-    transparent: true,
+    transparent: false, // SET TO TRUE
     alwaysOnTop: true,
     resizable: false,
     hasShadow: false,
@@ -89,19 +99,21 @@ const createWindow = () => {
 
   overlay.loadFile(path.join(dir, "overlay.html"));
   //overlay.webContents.openDevTools();
-  //Makes it so user can click an interract through window.
 
   overlay.setAlwaysOnTop(true, "screen-saver");
   overlay.setVisibleOnAllWorkspaces(true, {
     visibleOnFullScreen: true,
   });
-  overlay.setIgnoreMouseEvents(true);
+
+  //Makes it so user can click an interract through window.
+  overlay.setIgnoreMouseEvents(false); // SET TO TRUE
   /*   overlay.on("blur", () => {
     overlay.focus();
   }); */ // DISABLED FOR TESTING REASONS
+  // <-- MAIN OVERLAY END <--
 
-  // ----- DOCUMENT WINDOW -----
-
+  //____________________________________
+  /* -- DOCUMENT WINDOW -- */
   let documentWindow = new BrowserWindow({
     width: width * 0.5,
     height,
@@ -117,8 +129,10 @@ const createWindow = () => {
       e.preventDefault();
       documentWindow.hide();
     }
-  });
+  }); // <-- DOCUMENT WINDOW END <--
 
+  //________________________________________________________________
+  /* -- MEDIA PERMISSION PROMT -- */
   // Allow media permission via app-level confirmation (renderer will still prompt OS)
   session.defaultSession.setPermissionRequestHandler(
     (webContents, permission, callback) => {
@@ -137,24 +151,29 @@ const createWindow = () => {
       } else {
         callback(false);
       }
-    }
+    },
   );
-};
+}; // <-- CREATE ALL WINDWOS END <--
 
+//________________________________________________________________
+/* -- START APLICATION -- */
 app.whenReady().then(() => {
   createTray();
   createWindow();
 
+  //____________________________________
+  // GET MONITOR SIZE
   const monitor = screen.getPrimaryDisplay().workAreaSize;
   let mousePosition = new Point(monitor.width / 2, monitor.height / 2);
   let lastposition = new Point(monitor.width / 2, monitor.height / 2);
 
-  // Check last gesture
+  //____________________________________
+  // STORE LAST GESTURE
   let lastRightGesture;
   let lastLeftGesture;
 
-  // IPC MAIN PROCESS LISTENERS HERE
-
+  //________________________________________________________________
+  /* -- IPC MAIN PROCESS LISTENERS -- */
   /// Get gestures from renderer
   ipcMain.on("gestures-channel", (_event, result) => {
     const gesture = result.gestures[0][0].categoryName;
@@ -166,7 +185,7 @@ app.whenReady().then(() => {
       return;
     }
 
-    // ____________________
+    //____________________________________
     // Gesture recognition
     let handRight;
     let handLeft;
@@ -181,9 +200,8 @@ app.whenReady().then(() => {
         leftGesture = result.gestures[i][0].categoryName;
       }
     }
-
-    // LEFT - RIGHT MOVEMENT BASED ON INDEX FINGER X POSITION WITH OPEN HAND GESTURE
-
+    //____________________________________
+    // LEFT - RIGHT MOVEMENT BASED ON INDEX FINGER X POSITION
     const indexFingerTip = result.landmarks[0][8];
     const indexX = monitor.width - indexFingerTip.x * monitor.width;
     //console.log("Index finger X position:", indexX);
@@ -206,7 +224,7 @@ app.whenReady().then(() => {
       }
     }
 
-    // OWN GESTURES:
+    // LIST OF GESTURES:
 
     /*
       Pinch
@@ -224,8 +242,9 @@ app.whenReady().then(() => {
 
       */
 
-    // Gesture Object with gesturenames and corresponding keys -
-
+    //____________________________________
+    // GESTURE KEYMAPPING
+    // Gesture Object with gesturenames and corresponding keys
     const rightGestureObject = {
       Two_Fingers_Up: { key: Key.W, label: "W" },
       Two_Fingers_Down: { key: Key.S, label: "S" },
@@ -243,6 +262,7 @@ app.whenReady().then(() => {
     const crossReference =
       rightGestureObject[leftGesture] ?? leftGestureObject[rightGesture];
 
+    //____________________________________
     // KEY PRESSING
 
     if (rightGestureKey) {
@@ -271,13 +291,15 @@ app.whenReady().then(() => {
       });
     }
 
+    //____________________________________
+    // MOUSE MOVEMENT
     if (handRight) {
-      // MOUSE MOVEMENT
       const wristX = handRight[0].x;
       const wristY = handRight[0].y;
       const pointX = monitor.width - wristX * monitor.width;
       const pointY = wristY * monitor.height;
 
+      //____________________________________
       // MOUSE MOVEMENT GESTURE
       if (rightGesture == "Fist" || rightGesture === "Point_Up") {
         mousePosition.x = mousePosition.x - (lastposition.x - pointX);
@@ -292,13 +314,14 @@ app.whenReady().then(() => {
         lastposition.y = pointY;
       }
     }
+    //____________________________________
     // MOUSE CLICKING GESTURE
     if (rightGesture === "Point_Up" && lastRightGesture !== "Point_Up") {
       mouse.pressButton(Button.LEFT);
     } else if (rightGesture !== "Point_Up") {
       mouse.releaseButton(Button.LEFT);
     }
-
+    //____________________________________
     // E KEY FOR INTERACTION GESTURE
     if (leftGesture === "Fist" && lastLeftGesture !== "Fist") {
       keyboard.pressKey(Key.E);
@@ -317,10 +340,10 @@ app.whenReady().then(() => {
 
     lastRightGesture = rightGesture;
     lastLeftGesture = leftGesture;
-  });
+  }); // <-- IPC MAIN PROCESS LISTENERS END <--
 
-  // ELECTRON APP EVENTS
-
+  //________________________________________________________________
+  /* -- ELECTRON APP EVENTS -- */
   app.on("ready", createWindow);
 
   app.on("activate", () => {
@@ -334,4 +357,4 @@ app.whenReady().then(() => {
     isQuitting = true;
     tray.destroy();
   });
-});
+}); // <-- START APLICATION END <--

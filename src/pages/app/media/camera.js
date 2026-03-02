@@ -1,25 +1,33 @@
 // Camera permissions and device management utilities.
 // Exposes: requestStream(deviceId?), enumerateVideoInputs(), stopStream(stream|videoEl)
 //import { animationManager } from "./animationManager";
-export function stopStream(target) {
-  const stream = target && target.srcObject ? target.srcObject : target;
-  if (stream && stream.getTracks) {
-    stream.getTracks().forEach((t) => t.stop());
-  }
-  if (target && target.srcObject) target.srcObject = null;
+
+//________________________________________________________________
+/* ENUMERATE DEVICCES */
+export async function enumerateVideoInputs() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices.filter((d) => d.kind === "videoinput");
 }
 
+//________________________________________________________________
+/* START VIDEO STREAM */
 export async function requestStream(videoEl, deviceId, callback) {
   // deviceId optional: if provided, request exactly that device; else prompt default
+  //____________________________________
+  // DEVICE SETTINGS
   const constraints = {
     video: {
       deviceId: { exact: deviceId },
-      width: 320,
-      height: 180,
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+      frameRate: { ideal: 60 },
+      facingMode: "user",
       resizeMode: "crop-and-scale",
     },
     audio: false,
   };
+  //____________________________________
+  // START DEVICE
   try {
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
     if (videoEl) {
@@ -48,7 +56,12 @@ export async function requestStream(videoEl, deviceId, callback) {
   }
 }
 
-export async function enumerateVideoInputs() {
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  return devices.filter((d) => d.kind === "videoinput");
+//________________________________________________________________
+/* STOP VIDEO STREAM */
+export function stopStream(target) {
+  const stream = target && target.srcObject ? target.srcObject : target;
+  if (stream && stream.getTracks) {
+    stream.getTracks().forEach((t) => t.stop());
+  }
+  if (target && target.srcObject) target.srcObject = null;
 }
