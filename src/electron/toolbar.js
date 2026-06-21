@@ -1,11 +1,26 @@
-// Get the modal
+// Gets the modal
 const settings = document.getElementById("settings");
 
-// Get the button that opens the settings
+// Gets the button that opens the settings
 const settings_open = document.getElementById("settings_button");
 
-// Get the <span> element that closes the modal
+// Gets the <span> element that closes the modal
 const close_settings = document.getElementById("close_settings");
+
+// Gets the <range> element that controls on display hand size
+const hand_slider = document.getElementById("hand_slider");
+// Displays hand slider value
+var hand_slider_value = hand_slider.value;
+const hand_slider_value_display = document.getElementById("hand_slider_value");
+hand_slider_value_display.innerText = hand_slider_value;
+
+// Gets the <range> element that controls mouse sensitivity
+const mouse_slider = document.getElementById("mouse_slider");
+// Displays hand slider value
+var mouse_slider_value = mouse_slider.value;
+const mouse_slider_value_display =
+  document.getElementById("mouse_slider_value");
+mouse_slider_value_display.innerText = hand_slider_value;
 
 // When the user clicks on the button, open the modal
 settings_open.onclick = function () {
@@ -94,3 +109,13 @@ camera_button.addEventListener("click", () => {
     kinect_button.className = "button";
   }
 });
+
+hand_slider.oninput = () => {
+  hand_slider_value = hand_slider.value;
+  hand_slider_value_display.innerText = hand_slider_value;
+};
+
+mouse_slider.oninput = () => {
+  mouse_slider_value = mouse_slider.value;
+  mouse_slider_value_display.innerText = mouse_slider_value;
+};
