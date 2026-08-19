@@ -9,4 +9,11 @@ const window_show = (win) => {
   }
 };
 
-export { window_show };
+const renderer_store_get = async (key) => {
+  const result = window.store.get(key).then((value) => {
+    return value;
+  });
+  return result;
+};
+
+export { window_show, renderer_store_get };

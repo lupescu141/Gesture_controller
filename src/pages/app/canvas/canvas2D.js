@@ -16,7 +16,7 @@ async function draw(results, canvas, canvasCtx, drawingUtils) {
         {
           color: "#5555FF",
           lineWidth: 1,
-        }
+        },
       );
       drawingUtils.drawLandmarks(landmarks, {
         color: "#5555FF",

@@ -11,11 +11,31 @@ const {
 } = require("electron");
 import { mouse, Point, keyboard, Key, Button } from "@nut-tree-fork/nut-js";
 import { window_show } from "./functions";
+import { store } from "./store.js";
 
 if (require("electron-squirrel-startup")) {
   app.quit();
 }
 const path = require("path");
+
+//Stores data to store config
+ipcMain.handle("store-set", (event, key, value) => {
+  store.set(key, value);
+});
+//Gets data from store config
+ipcMain.handle("store-get", (event, key) => {
+  return store.get(key);
+});
+//deletes data from store config
+ipcMain.handle("store-delete", (event, key) => {
+  store.delete(key);
+});
+
+console.log("Config file path: ", store.path);
+
+//Here we get values from config to variables to save on prosessing power
+let mouseSensitivity = store.get("mouseSensitivity");
+let handSize = store.get("handSize");
 
 // Enable usage of Portal's globalShortcuts. This is essential for cases when
 // the app runs in a Wayland session.
@@ -136,6 +156,10 @@ const createWindow = () => {
     title: "Toolbar",
     skipTaskbar: true,
     show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true, // Isolates the context between main and renderer processes for security.
+    },
   });
 
   toolbar.loadFile(path.join(dir, "toolbar.html"));
@@ -307,8 +331,10 @@ app.whenReady().then(() => {
 
       // MOUSE MOVEMENT GESTURE
       if (rightGesture == "Fist" || rightGesture === "Point_Up") {
-        mousePosition.x = mousePosition.x - (lastposition.x - pointX);
-        mousePosition.y = mousePosition.y - (lastposition.y - pointY);
+        mousePosition.x =
+          mousePosition.x - (lastposition.x - pointX * mouseSensitivity);
+        mousePosition.y =
+          mousePosition.y - (lastposition.y - pointY * mouseSensitivity);
         lastposition.x = pointX;
         lastposition.y = pointY;
         mouse
@@ -372,7 +398,9 @@ app.whenReady().then(() => {
   });
 
   // ELECTRON APP EVENTS
-  app.on("ready", createWindow);
+  app.on("ready", () => {
+    createWindow();
+  });
 
   // Check whether a shortcut is registered.
   console.log(globalShortcut.isRegistered("CommandOrControl+O"));

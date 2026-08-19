@@ -16,6 +16,15 @@ hand_slider_value_display.innerText = hand_slider_value;
 
 // Gets the <range> element that controls mouse sensitivity
 const mouse_slider = document.getElementById("mouse_slider");
+
+try {
+  window.store.get("mouseSensitivity").then((value) => {
+    console.log("Mouse sensitivity:", value);
+  });
+} catch (err) {
+  console.log(err);
+}
+
 // Displays hand slider value
 var mouse_slider_value = mouse_slider.value;
 const mouse_slider_value_display =
