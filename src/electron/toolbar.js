@@ -17,6 +17,8 @@ hand_slider_value_display.innerText = hand_slider_value;
 // Gets the <range> element that controls mouse sensitivity
 const mouse_slider = document.getElementById("mouse_slider");
 
+const save_button = document.getElementById("settings_save_button");
+
 try {
   window.store.get("mouseSensitivity").then((value) => {
     console.log("Mouse sensitivity:", value);
@@ -40,11 +42,35 @@ settings_open.onclick = function () {
     console.log("false");
     settings.style.display = "none";
   }
+
+  //Restores user saved settings
+  try {
+    window.store.get("mouseSensitivity").then((value) => {
+      mouse_slider.value = value;
+      mouse_slider_value_display.innerText = value;
+    });
+    window.store.get("handSize").then((value) => {
+      hand_slider.value = value;
+      hand_slider_value_display.innerText = value;
+    });
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 // When the user clicks on <span> (x), close the modal
 close_settings.onclick = function () {
   settings.style.display = "none";
+};
+
+//Saves new user settings
+save_button.onclick = () => {
+  try {
+    window.store.set("mouseSensitivity", parseFloat(mouse_slider.value));
+    window.store.set("handSize", parseFloat(hand_slider.value));
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 // Make the DIV element draggable:

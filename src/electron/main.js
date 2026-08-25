@@ -18,24 +18,29 @@ if (require("electron-squirrel-startup")) {
 }
 const path = require("path");
 
-//Stores data to store config
-ipcMain.handle("store-set", (event, key, value) => {
-  store.set(key, value);
-});
 //Gets data from store config
 ipcMain.handle("store-get", (event, key) => {
   return store.get(key);
 });
+
+//Here we get values from config to variables to save on prosessing power
+let mouseSensitivity = store.get("mouseSensitivity");
+let handSize = store.get("handSize");
+
+//Stores data to store config
+ipcMain.handle("store-set", (event, key, value) => {
+  store.set(key, value);
+  mouseSensitivity = store.get("mouseSensitivity");
+  handSize = store.get("handSize");
+  console.log("Settings saved");
+});
+
 //deletes data from store config
 ipcMain.handle("store-delete", (event, key) => {
   store.delete(key);
 });
 
 console.log("Config file path: ", store.path);
-
-//Here we get values from config to variables to save on prosessing power
-let mouseSensitivity = store.get("mouseSensitivity");
-let handSize = store.get("handSize");
 
 // Enable usage of Portal's globalShortcuts. This is essential for cases when
 // the app runs in a Wayland session.
@@ -326,15 +331,13 @@ app.whenReady().then(() => {
       // MOUSE MOVEMENT
       const wristX = handRight[0].x;
       const wristY = handRight[0].y;
-      const pointX = monitor.width - wristX * monitor.width;
-      const pointY = wristY * monitor.height;
+      const pointX = monitor.width - wristX * mouseSensitivity * monitor.width;
+      const pointY = wristY * mouseSensitivity * monitor.height;
 
       // MOUSE MOVEMENT GESTURE
       if (rightGesture == "Fist" || rightGesture === "Point_Up") {
-        mousePosition.x =
-          mousePosition.x - (lastposition.x - pointX * mouseSensitivity);
-        mousePosition.y =
-          mousePosition.y - (lastposition.y - pointY * mouseSensitivity);
+        mousePosition.x = mousePosition.x - (lastposition.x - pointX);
+        mousePosition.y = mousePosition.y - (lastposition.y - pointY);
         lastposition.x = pointX;
         lastposition.y = pointY;
         mouse

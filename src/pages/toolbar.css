@@ -39,6 +39,8 @@ button {
   background-color: rgb(34, 35, 39);
   border-radius: 15%;
   border: none;
+  display: flex;
+  justify-content: space-around;
 }
 
 button:hover {
@@ -56,6 +58,8 @@ button:active {
   background-color: #2196f3;
   border-radius: 15%;
   border: none;
+  display: flex;
+  justify-content: space-around;
 }
 
 .button_activated:hover {
@@ -67,7 +71,9 @@ button:active {
 }
 
 img {
-  width: 1.5vw;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 #settings {
@@ -244,4 +250,34 @@ input:checked + .slider:before {
 button:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
+}
+
+.save_button_container {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 10px;
+  border-top: 2px solid rgb(22, 23, 26);
+  padding-top: 10px;
+}
+
+.settings_save_button {
+  font-size: 20px;
+  color: rgb(34, 35, 39);
+  text-align: center;
+  background: #2196f3;
+  width: 60px;
+  height: 31px;
+  align-items: center;
+  border-radius: 6px;
+}
+
+.settings_save_button:hover {
+  background: #2f9ffb;
+}
+
+.settings_save_button:active {
+  background: #2186d9;
 }
